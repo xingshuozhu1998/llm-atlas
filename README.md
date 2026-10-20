@@ -9,7 +9,7 @@
 ## 知识体系
 
 ```
-导读          如何阅读 · 符号约定 · 动手学：各种 nano 项目
+导读          如何阅读 · 符号约定 · 概率论 / 信息论 / GPU / 统计 基础 · 动手学：各种 nano 项目
 基础模型       Qwen · DeepSeek · GLM · Llama · Kimi · MiniMax · StepFun · Gemini · Claude · OpenAI
 后训练         总览：两个维度（训练目标 × 参数更新方式）· 统一梯度视角 · 典型流水线 · 选型
               ├ SFT：全量微调 · 数据构造 · Chat Template · Packing · Loss Masking

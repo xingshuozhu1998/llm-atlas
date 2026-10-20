@@ -126,6 +126,50 @@ flowchart TD
 
 一句话：**离线评测负责"别上线明显更差的"，线上 A/B 负责"确认真的更好再全量"。** 二者都怕同一件事——把噪声当成了真本事。
 
+## 十、离线评测分数的误差棒
+
+前九节讲的是线上 A/B，但同一套统计学在**上线前**同样适用，而且常被整个跳过：一个模型在 500 道题上答对 62%，另一个 63.2%，这 1.2 个点算赢了吗？
+
+**一、单次跑分本身就是一个估计值。** 题目是从"所有可能的题"里抽的样本，所以准确率 $\hat{p}$ 带着抽样误差。$n$ 道题上的 95% 置信区间（正态近似）：
+
+$$
+\hat{p} \pm z\sqrt{\frac{\hat{p}(1 - \hat{p})}{n}}, \qquad z = 1.96 .
+$$
+
+代几个真实规模进去，结论相当刺眼：
+
+| 基准规模 | 得分 | 95% 区间 | 含义 |
+| --- | --- | --- | --- |
+| $n = 500$ | 62% | [57.7%, 66.3%]（±4.3 点） | 1.2 个点的差距完全在噪声里 |
+| $n = 2000$ | 62% | [59.9%, 64.1%]（±2.1 点） | 样本翻 4 倍，误差才减半 |
+| $n = 30$（AIME 2024 的题量） | 60% | [42.5%, 77.5%]（±17.5 点） | 单次跑分几乎没有分辨率 |
+
+当 $n$ 很小、或分数贴近 0 / 100 时，上面的正态近似会失真（区间甚至会越出 0–100）。这时用 **Wilson 区间**：
+
+$$
+\frac{1}{1 + z^2/n}\left[\hat{p} + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}\right] .
+$$
+
+$n=30$、$\hat{p}=90\%$ 时，正态近似给出上界 100.7%（不可能），Wilson 给出 [74.4%, 96.5%]。
+
+**二、解码随机性是第二层方差。** temperature > 0 时，同一个模型、同一套题，两次跑分也不一样。所以现在主流做法是报 **avg@k**（跑 $k$ 次取平均）并附上标准差，而不是单次成绩。两层方差要分清：题目抽样的方差靠加题压，解码的方差靠多跑几次压，细节见 [蒙特卡洛估计](/guide/probability#四、蒙特卡洛估计-为什么-grpo-要-采一组)。
+
+**三、pass@k 要用无偏估计量。** 直接拿单次正确率 $\hat{p}$ 代进 $1-(1-\hat{p})^k$ 是有偏的。标准做法（Chen et al., 2021）是每题生成 $n \ge k$ 个样本、数出 $c$ 个正确，再算
+
+$$
+\text{pass@}k = \mathbb{E}_{\text{题目}}\left[1 - \frac{\binom{n - c}{k}}{\binom{n}{k}}\right] .
+$$
+
+以 $n=10$、$c=3$ 为例：无偏估计给出 pass@2 = 0.533、pass@5 = 0.917，而朴素代入给出 0.510 和 0.832。
+
+**四、比较两个模型，要配对，别比区间重不重叠。** 两个模型跑的是**同一套题**，题目难度这个最大的方差来源是两边共有的，配对比较（配对 bootstrap，或二元结果用 McNemar 检验）能把它消掉，灵敏度远高于"看两条误差棒有没有重叠"——后者是个过于保守的判据，经常把真实差异判成不显著。
+
+**五、非二元指标用 bootstrap。** LLM-as-judge 的打分、平均长度、延迟这类不是 0/1 的指标没有简单公式，就对**题目**做有放回重采样（$B \approx 1000$ 次），取 2.5% / 97.5% 分位数当区间。若每题采了多个样本，要按题整组重采样（cluster bootstrap），否则会系统性低估方差。
+
+**六、跑很多基准 = 多重比较。** 一次在 20 个 benchmark 上对比两个模型，纯靠运气也会有一两个"显著更好"。这和第七节的多重比较是同一个坑：要么预先指定主指标，要么做 Bonferroni / FDR 校正。
+
+一句话纪律：**报分数就报区间，比模型就配对，题目太少就别声称赢了。**
+
 ## 速查表
 
 | 术语 | 一句话含义 |
@@ -141,6 +185,9 @@ flowchart TD
 | 统计功效 | 真有差异时能测出来的概率，1−β，惯例 ≥80% |
 | MDE | 想测得出来的最小提升；越小需要样本越多 |
 | A/A 测试 | 同版本对照，验证分流系统无偏 |
+| Wilson 区间 | 小样本 / 极端比例下更可靠的比例置信区间 |
+| 配对比较 | 两模型跑同一套题，消掉题目难度方差，比各自区间灵敏 |
+| Bootstrap | 对题目有放回重采样算区间，适用于非二元指标 |
 | 护栏指标 | 不能被牺牲的底线指标（延迟、崩溃率等） |
 
 ## 参考
@@ -148,3 +195,7 @@ flowchart TD
 - Kohavi, Tang & Xu. *Trustworthy Online Controlled Experiments: A Practical Guide to A/B Testing.* Cambridge University Press, 2020.
 - Kohavi et al. *Controlled Experiments on the Web: Survey and Practical Guide.* Data Mining and Knowledge Discovery, 2009.
 - Deng et al. *Improving the Sensitivity of Online Controlled Experiments by Utilizing Pre-Experiment Data (CUPED).* WSDM 2013.
+- Miller, 2024. *Adding Error Bars to Evals: A Statistical Approach to Language Model Evaluations.* arXiv:2411.00640
+- Chen et al., 2021. *Evaluating Large Language Models Trained on Code.* arXiv:2107.03374（pass@k 无偏估计量）
+- Wilson, 1927. *Probable Inference, the Law of Succession, and Statistical Inference.* JASA.
+- Efron & Tibshirani, 1993. *An Introduction to the Bootstrap.*

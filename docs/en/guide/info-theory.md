@@ -96,6 +96,47 @@ This explains why these losses look the way they do:
 - **Why does simply minimizing cross-entropy work when training SFT?** Because $H(p)$ is intrinsic to the data, a constant independent of the parameters $\theta$, so minimizing the cross-entropy $H(p,q)$ is exactly equivalent to minimizing $\mathrm{KL}(p\|q)$—that is, making the model distribution approach the data distribution.
 - **Why does distillation use KL rather than cross-entropy?** In distillation the "true distribution" is the teacher model's soft labels (not one-hot), so $H(p)$ is no longer a constant; writing it directly as $\mathrm{KL}(\text{teacher}\|\text{student})$ is cleaner and clearer in meaning: make the student distribution match the teacher distribution. See [Distillation Overview](/en/distillation/).
 
+## Mutual information: how much two variables share
+
+The quantities above all compare **two distributions** (truth vs. model, teacher vs. student). There is another question with a different shape: **how much are two random variables related**—once you know $Y$, how much of the uncertainty about $X$ goes away? The quantity that measures this is **mutual information**.
+
+First, one more piece: the **conditional entropy** $H(X \mid Y)$, i.e. how much uncertainty about $X$ remains once $Y$ is known (averaged over all possible $y$ by probability):
+
+$$
+H(X \mid Y) = \mathbb{E}_{y \sim p(y)}\big[H(X \mid Y = y)\big] = -\sum_{x, y} p(x, y)\log p(x \mid y).
+$$
+
+Mutual information is simply the difference between the entropy "before knowing $Y$" and "after knowing $Y$":
+
+$$
+I(X; Y) = H(X) - H(X \mid Y) = H(Y) - H(Y \mid X) = H(X) + H(Y) - H(X, Y).
+$$
+
+In one sentence: **how many bits of average surprise about $X$ are removed once you know $Y$**. It also has an equivalent form that connects straight back to the previous section—how far the joint distribution is from "pretending the two are independent":
+
+$$
+I(X; Y) = \mathrm{KL}\big(p(x, y) \,\|\, p(x)\,p(y)\big).
+$$
+
+In other words, **mutual information is just a special case of KL divergence**, from which its properties follow directly:
+
+1. **Non-negative**: $I(X;Y)\ge 0$, and $=0$ if and only if $X$ and $Y$ are independent (then $p(x,y)=p(x)p(y)$ and the KL is 0)—no relationship means "knowing it makes you no wiser."
+2. **Symmetric**: $I(X;Y)=I(Y;X)$. Unlike KL, where you must keep straight which comes first.
+3. **Bounded**: $I(X;Y)\le\min\{H(X),\,H(Y)\}$. When $Y$ fully determines $X$, $H(X\mid Y)=0$ and the mutual information reaches $H(X)$.
+4. **Conditional version** $I(X;Y\mid Z)$: given that you already know $Z$, how much more $Y$ can still tell you about $X$. That is what the example below uses.
+
+**A language-model example**: let $X$ be the prompt and $Y$ the response; $I(X;Y)$ is then "how many bits of uncertainty about the answer disappear once you see the question." A model that ignores the prompt entirely has zero mutual information; the more tightly the prompt constrains the answer (a math problem with a single correct answer, say), the larger it gets. It asks a different question than perplexity: PPL measures how much uncertainty is left, mutual information measures how much of it $X$ explains away.
+
+**A place it genuinely matters: information leakage in self-distillation.** Self-distillation (OPSD) in [OPD](/en/opd/) is the cleanest example: the teacher is "yourself, having peeked at the reference answer $r$," while the student cannot see $r$. Theorem 1 of RLSD (*Self-Distilled RLVR*, arXiv:2604.03128) decomposes the OPSD loss into exactly the same shape as the identity on this page:
+
+$$
+\mathcal{L}_{\text{OPSD}} = \underbrace{\mathcal{L}^{*}}_{\text{what should be learned: match the teacher's marginal}} + \underbrace{I(Y_t;\, R \mid X,\, Y_{<t})}_{\text{what cannot be learned: extra information from the reference}}.
+$$
+
+That second term is precisely a **conditional mutual information**: given the prompt and the prefix generated so far, how much extra information the reference answer still carries about the next token. It is determined entirely by the teacher's distributions and contains no student parameter $\theta$, so no amount of training can remove it—it is a strictly positive lower bound on the loss. The paper further shows that while the expected gradient is benign, per-sample gradients carry an $r$-specific deviation whose variance grows monotonically with this mutual information; an optimizer walking sample by sample along those deviations can only end up encoding $x \to r$ correlations into the parameters—which shows up as the model citing a reference answer it never had access to. See [OPD Overview](/en/opd/).
+
+Mutual information also shows up in contrastive learning (the InfoNCE loss is a lower bound on it), in RL exploration as an information-gain intrinsic reward, and in data selection as a measure of redundancy between samples.
+
 ## Perplexity: the "exponential version" of cross-entropy
 
 The **perplexity (PPL)** you hear about most often when evaluating language models is not actually anything new—it is just cross-entropy exponentiated:
@@ -134,6 +175,8 @@ This also explains why the [Notation Conventions](/en/guide/notation) define $\b
 | Entropy $H(p)$ | $-\sum_x p\log p$ | How uncertain a distribution is on average / minimum bits to store it |
 | Cross-entropy $H(p,q)$ | $-\sum_x p\log q$ | Bits needed on average to encode data from $p$ using $q$ |
 | KL divergence $\mathrm{KL}(p\|q)$ | $\sum_x p\log\frac{p}{q}$ | Bits wasted by passing off $q$ as $p$ (≥0, asymmetric) |
+| Conditional entropy $H(X\mid Y)$ | $-\sum_{x,y} p(x,y)\log p(x\mid y)$ | Uncertainty about $X$ left once $Y$ is known |
+| Mutual information $I(X;Y)$ | $H(X)-H(X\mid Y)=\mathrm{KL}(p(x,y)\|p(x)p(y))$ | Bits of uncertainty about $X$ removed by knowing $Y$ (≥0, symmetric) |
 | Perplexity $\text{PPL}$ | $e^{H(p,q)}$ | Cross-entropy exponentiated; how many "options" the model hesitates among on average |
 | Core relationship | $H(p,q)=H(p)+\mathrm{KL}(p\|q)$ | Total cost = intrinsic cost + model bias |
 

@@ -60,6 +60,7 @@ export const zh: LocaleSpecificConfig<DefaultTheme.Config> = {
           { text: '全景速览', link: '/' },
           { text: '如何使用本知识库', link: '/guide/' },
           { text: '符号约定', link: '/guide/notation' },
+          { text: '概率论基础', link: '/guide/probability' },
           { text: '信息论基础', link: '/guide/info-theory' },
           { text: 'GPU 基础', link: '/guide/gpu' },
           { text: 'A/B 实验与统计', link: '/guide/ab-testing' },

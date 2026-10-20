@@ -40,6 +40,7 @@ export const en: LocaleSpecificConfig<DefaultTheme.Config> = {
           { text: 'At a Glance', link: '/en/' },
           { text: 'How to Read This Atlas', link: '/en/guide/' },
           { text: 'Notation', link: '/en/guide/notation' },
+          { text: 'Probability Basics', link: '/en/guide/probability' },
           { text: 'Information Theory Basics', link: '/en/guide/info-theory' },
           { text: 'GPU Basics', link: '/en/guide/gpu' },
           { text: 'A/B Testing & Statistics', link: '/en/guide/ab-testing' },

@@ -128,3 +128,10 @@
   line-height: 1.5;
   padding: 6px 0;
 }
+
+/* 深色模式的品牌色是浅蓝，白字压上去对比度不够（约 2:1），brand 按钮改用墨色字 */
+.dark {
+  --vp-button-brand-text: #16181d;
+  --vp-button-brand-hover-text: #16181d;
+  --vp-button-brand-active-text: #16181d;
+}

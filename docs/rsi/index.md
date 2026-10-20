@@ -66,7 +66,7 @@ title: RSI：Harness 自我改进——从上下文工程到演化搜索，agent
 
 ## 与本站其他内容的关系
 
-这条"harness 自我改进"的技术路径，和站内几处内容天然是同一枚硬币的不同切面：[Rubric 化评测与训练](/eval/rubrics#rubric-靠谱吗四层可靠性问题) 一页专门讨论过的"评估质量是前提"，正是这里第一个瓶颈的另一种表述——rubric 靠不靠谱和 harness 自我改进循环里"评估器弱且模糊"是同一个根问题在评测和训练两个场景下的重现；rubric 那一页结尾讲的"内生化"（rubric 生成能力和回答能力共用一套参数、联合演化），与本页"权重与 harness 联合优化"一节讨论的方向也是同一个更大命题的两个具体实例。[DR-Rubric](/agent/deep-research/dr-rubric) 里模型自己 bootstrap 出训练用的 rubric，是"用当前能力去改进产生能力的机制"这条 RSI 定义在 deep research 领域的一个具体样本。[Agentic RL](/agent/agentic-rl/) 把整条 harness 循环当成 RL 的 rollout 环境去训练策略本身，是"改进权重"这条路径里最直接的一种做法。[Skills 自动化](/skills/autoskill/) 一节则是把"自我改进"的对象换成技能库而不是 harness 代码，方法论上高度平行。
+这条"harness 自我改进"的技术路径，和站内几处内容天然是同一枚硬币的不同切面：[Rubric 化评测与训练](/eval/rubrics#rubric-靠谱吗-四层可靠性问题) 一页专门讨论过的"评估质量是前提"，正是这里第一个瓶颈的另一种表述——rubric 靠不靠谱和 harness 自我改进循环里"评估器弱且模糊"是同一个根问题在评测和训练两个场景下的重现；rubric 那一页结尾讲的"内生化"（rubric 生成能力和回答能力共用一套参数、联合演化），与本页"权重与 harness 联合优化"一节讨论的方向也是同一个更大命题的两个具体实例。[DR-Rubric](/agent/deep-research/dr-rubric) 里模型自己 bootstrap 出训练用的 rubric，是"用当前能力去改进产生能力的机制"这条 RSI 定义在 deep research 领域的一个具体样本。[Agentic RL](/agent/agentic-rl/) 把整条 harness 循环当成 RL 的 rollout 环境去训练策略本身，是"改进权重"这条路径里最直接的一种做法。[Skills 自动化](/skills/autoskill/) 一节则是把"自我改进"的对象换成技能库而不是 harness 代码，方法论上高度平行。
 
 ## 参考文献
 

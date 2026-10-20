@@ -28,8 +28,9 @@ title: 符号约定
 | $\mathbb{D}$ | 训练数据集 |
 | $\mathbb{E}_{(\cdot) \sim \mathbb{D}}[\cdot]$ | 在数据分布上取期望 |
 | $\mathrm{KL}(p \,\|\, q)$ | $p$ 相对 $q$ 的 KL 散度 |
+| $I(X;Y)$ | 随机变量 $X$ 与 $Y$ 的互信息，条件版本写作 $I(X;Y\mid Z)$ |
 
-> 不熟悉熵 / 交叉熵 / KL 散度 / 比特之间关系的读者，建议先读 [信息论基础](/guide/info-theory)——SFT 损失、DPO/RLHF 的 KL 约束、蒸馏都建立在这几个概念上。
+> 不熟悉期望 / 方差 / 重要性采样的读者先读 [概率论基础](/guide/probability)；不熟悉熵 / 交叉熵 / KL 散度 / 互信息 / 比特之间关系的读者先读 [信息论基础](/guide/info-theory)——SFT 损失、DPO/RLHF 的 KL 约束、蒸馏都建立在这几个概念上。
 
 策略对完整回答的概率按自回归分解为各 token 条件概率之积：行内写作 $\pi_\theta(y \mid x) = \prod_{t=1}^{\lvert y \rvert} \pi_\theta(y_t \mid x, y_{<t})$。
 
